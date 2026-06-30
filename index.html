@@ -96,6 +96,17 @@
     </section>
   </main>
 
+  <dialog id="groupFocusDialog" class="dialog group-focus-dialog">
+    <form method="dialog" class="dialog-card group-focus-card">
+      <div class="focus-toolbar no-capture">
+        <button value="close" class="btn ghost" type="button" id="closeGroupFocus">Fermer</button>
+        <button type="button" class="btn secondary" id="captureGroupFocus">Mode capture</button>
+      </div>
+      <section id="groupFocusContent" class="group-focus-content"></section>
+    </form>
+  </dialog>
+
+
   <dialog id="optionsDialog" class="dialog">
     <form method="dialog" class="dialog-card">
       <h3>Options de répartition</h3>
@@ -174,7 +185,7 @@
         <article class="help-block b2"><strong>2. Vérifier les élèves</strong><span>L’application propose automatiquement G/F selon le prénom. Vous pouvez corriger le sexe et le classement en deux secondes.</span></article>
         <article class="help-block b3"><strong>3. Générer les groupes</strong><span>Choisissez aléatoire, mixte, homogène, hétérogène ou manuel. Le classement 1 à 5 sert aux groupes homogènes/hétérogènes.</span></article>
         <article class="help-block b4"><strong>4. Ajuster sur le terrain</strong><span>Sur tablette ou téléphone : appui long sur un élève, puis déplacez-le. Sur ordinateur : glisser-déposer classique. En manuel, la liste “élèves disponibles” sert de réserve.</span></article>
-        <article class="help-block b5"><strong>5. Mémos EPS</strong><span>Chaque groupe possède une zone libre pour noter score, observations, rôles, points ou remarques de fin de match.</span></article>
+        <article class="help-block b5"><strong>5. Mémos EPS</strong><span>Chaque groupe possède une zone libre pour noter score, observations, rôles, points ou remarques de fin de match. Le bouton “Plein écran” ouvre un groupe seul en grand pour une capture nette.</span></article>
         <article class="help-block b6"><strong>6. Stockage local</strong><span>Les classes restent dans le navigateur de l’appareil. Pour repartir à zéro, supprimez la classe concernée.</span></article>
       </div>
       <button value="close" class="btn primary">J’ai compris</button>

@@ -142,7 +142,7 @@ function renderGroups(){
   state.groups.forEach((g,gi)=>{
     if(!g.color) g.color=colorFor(gi);
     const card=document.createElement('article'); card.className='group-card'; card.dataset.gi=gi; card.style.setProperty('--groupColor', g.color);
-    card.innerHTML=`<h3>${g.name}<span>${g.students.length}</span></h3>${groupStatsHtml(g)}<div class="dropzone"></div><textarea class="memo" placeholder="Mémo : observations, score, rôle, points...">${escapeHtml(g.memo||'')}</textarea>`;
+    card.innerHTML=`<div class="group-card-head"><h3>${g.name}<span>${g.students.length}</span></h3><button class="btn ghost focus-btn" type="button" data-focus="${gi}">Plein écran</button></div>${groupStatsHtml(g)}<div class="dropzone"></div><textarea class="memo" placeholder="Mémo : observations, score, rôle, points...">${escapeHtml(g.memo||'')}</textarea>`;
     const zone=card.querySelector('.dropzone');
     g.students.forEach((s,si)=>zone.appendChild(studentPill(s,{type:'group',gi,si})));
     card.dataset.dropType='group';
@@ -150,6 +150,7 @@ function renderGroups(){
     card.addEventListener('dragover',e=>e.preventDefault());
     card.addEventListener('drop',()=>moveDragged({type:'group',gi}));
     card.querySelector('.memo').oninput=e=>{state.groups[gi].memo=e.target.value;save();};
+    card.querySelector('[data-focus]').onclick=()=>openGroupFocus(gi);
     box.appendChild(card);
   });
 }
@@ -255,6 +256,33 @@ function moveDragged(target){
   if(target.type==='group') state.groups[target.gi].students.push(s);
   dragged=null; save(); renderGroups();
 }
+
+function openGroupFocus(gi){
+  const g=state.groups[gi]; if(!g) return;
+  const dialog=$('#groupFocusDialog');
+  const content=$('#groupFocusContent');
+  dialog.classList.remove('capture-clean');
+  content.style.setProperty('--groupColor', g.color || colorFor(gi));
+  content.innerHTML=`<div class="focus-title"><div><p class="eyebrow">${escapeHtml(currentClass()?.name || 'Classe')}</p><h2>${escapeHtml(g.name)}</h2></div><span>${g.students.length} élèves</span></div>${groupStatsHtml(g)}<div class="focus-students">${g.students.map(s=>`<div class="focus-student"><strong>${escapeHtml(s.name)}</strong><span>${s.sex} · niveau ${s.level}</span></div>`).join('')}</div><label class="focus-memo-label">Mémo / observations<textarea id="focusMemo" class="focus-memo" placeholder="Score, observations, rôles, points...">${escapeHtml(g.memo||'')}</textarea></label>`;
+  const memo=$('#focusMemo');
+  memo.oninput=e=>{
+    state.groups[gi].memo=e.target.value;
+    const cardMemo=document.querySelector(`.group-card[data-gi="${gi}"] .memo`);
+    if(cardMemo) cardMemo.value=e.target.value;
+    save();
+  };
+  dialog.showModal();
+  setTimeout(()=>memo.focus({preventScroll:true}),80);
+}
+const closeFocusBtn=$('#closeGroupFocus');
+if(closeFocusBtn) closeFocusBtn.onclick=()=>$('#groupFocusDialog').close();
+const captureFocusBtn=$('#captureGroupFocus');
+if(captureFocusBtn) captureFocusBtn.onclick=()=>{
+  const dialog=$('#groupFocusDialog');
+  dialog.classList.toggle('capture-clean');
+  captureFocusBtn.textContent=dialog.classList.contains('capture-clean')?'Afficher boutons':'Mode capture';
+};
+
 function shuffle(a){ return [...a].sort(()=>Math.random()-.5); }
 function label(m){ return {random:'Aléatoire',mixed:'Mixte',heterogeneous:'Hétérogène',homogeneous:'Homogène',manual:'Manuel'}[m]||'Groupes'; }
 function escapeHtml(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
