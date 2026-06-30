@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CréaGroupe</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="app">
+    <section id="cover" class="screen cover-screen">
+      <button id="helpCover" class="help-float" type="button">? Aide</button>
+      <div class="hero-card premium-hero">
+        <div class="hero-topline"><span class="brand-badge">EPS</span><span class="hero-chip">Groupes rapides</span></div>
+        <h1>CréaGroupe</h1>
+        <p>Copiez votre liste, choisissez une classe, générez des groupes cohérents. Pensé pour l’EPS : lisible, rapide et utilisable en gymnase.</p>
+        <div class="hero-features"><span>⚡ Copie-colle</span><span>🎯 Mixité</span><span>🔄 Glisser-déposer</span></div>
+        <button id="enterApp" class="btn primary large">Entrer</button>
+      </div>
+    </section>
+
+    <section id="classesScreen" class="screen hidden">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Application EPS</p>
+          <h2>Mes classes</h2>
+        </div>
+        <div class="top-actions"><button class="btn help-btn" data-help type="button">? Aide</button><button id="openCalculator" class="btn ghost">Calculette</button></div>
+      </header>
+
+      <section class="panel create-class-panel">
+        <div class="panel-title">
+          <h3>Ajouter une classe</h3>
+          <p>Copiez-collez simplement votre liste : un élève par ligne. L’app propose automatiquement le sexe et le niveau reste modifiable.</p>
+        </div>
+        <div class="class-form">
+          <input id="className" placeholder="Ex : 6G" maxlength="30" />
+          <textarea id="classList" placeholder="Ex :&#10;Alice Martin&#10;Lucas Bernard&#10;Samir Petit"></textarea>
+          <button id="addClass" class="btn primary">Créer le dossier</button>
+        </div>
+      </section>
+
+      <section id="classGrid" class="class-grid"></section>
+    </section>
+
+    <section id="studentsScreen" class="screen hidden">
+      <header class="topbar sticky">
+        <button id="backToClasses" class="btn ghost">← Classes</button>
+        <div>
+          <p class="eyebrow">Classe sélectionnée</p>
+          <h2 id="currentClassTitle">Classe</h2>
+        </div>
+        <div class="top-actions"><button class="btn help-btn" data-help type="button">? Aide</button><button id="openOptions" class="btn primary">Créer des groupes</button></div>
+      </header>
+
+      <section class="panel tools-panel">
+        <button id="addStudent" class="btn secondary">+ Élève</button>
+        <button id="saveStudents" class="btn secondary">Sauvegarder</button>
+        <button id="deleteClass" class="btn danger">Supprimer classe</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h3>Liste des élèves</h3>
+          <p>Sexe : G/F/A. Classement : 1 faible → 5 fort, utilisé pour homogène et hétérogène.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Nom</th><th>Sexe</th><th>Classement</th><th></th></tr>
+            </thead>
+            <tbody id="studentTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="groupsScreen" class="screen hidden">
+      <header class="topbar sticky">
+        <button id="backToStudents" class="btn ghost">← Élèves</button>
+        <div>
+          <p class="eyebrow" id="modeLabel">Groupes</p>
+          <h2 id="groupTitle">Groupes</h2>
+        </div>
+        <div class="top-actions"><button class="btn help-btn" data-help type="button">? Aide</button><button id="newGroups" class="btn primary">Options</button></div>
+      </header>
+      <section id="manualBench" class="panel bench-panel hidden">
+        <div class="panel-title">
+          <h3>Élèves disponibles</h3>
+          <p>Glissez un élève dans un groupe. Il disparaît de cette liste. Glissez-le ici pour le retirer d’un groupe.</p>
+        </div>
+        <div id="availableStudents" class="available-list"></div>
+      </section>
+      <section id="groupsContainer" class="groups-container"></section>
+    </section>
+  </main>
+
+  <dialog id="optionsDialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <h3>Options de répartition</h3>
+      <label>Mode
+        <select id="groupMode">
+          <option value="random">Répartition aléatoire</option>
+          <option value="mixed">Mixte</option>
+          <option value="heterogeneous">Hétérogène</option>
+          <option value="homogeneous">Homogène</option>
+          <option value="manual">Manuel</option>
+        </select>
+      </label>
+      <label>Nombre de groupes
+        <input id="groupCount" type="number" min="1" value="4" />
+      </label>
+      <div id="mixedOptions" class="mixed-options hidden">
+        <label>Règle filles par groupe
+          <select id="girlsRule">
+            <option value="random">Aléatoire / équilibré</option>
+            <option value="min1">Minimum 1 fille</option>
+            <option value="min2">Minimum 2 filles</option>
+            <option value="min3">Minimum 3 filles</option>
+            <option value="exact1">Exactement 1 fille</option>
+            <option value="exact2">Exactement 2 filles</option>
+            <option value="exact3">Exactement 3 filles</option>
+          </select>
+        </label>
+        <label>Règle garçons par groupe
+          <select id="boysRule">
+            <option value="random">Aléatoire / équilibré</option>
+            <option value="max1">Maximum 1 garçon</option>
+            <option value="max2" selected>Maximum 2 garçons</option>
+            <option value="max3">Maximum 3 garçons</option>
+            <option value="exact1">Exactement 1 garçon</option>
+            <option value="exact2">Exactement 2 garçons</option>
+            <option value="exact3">Exactement 3 garçons</option>
+          </select>
+        </label>
+        <p class="helper-text">Conseil EPS : laissez une règle en “aléatoire” si l’effectif ne permet pas une contrainte stricte.</p>
+      </div>
+      <div class="dialog-actions">
+        <button value="cancel" class="btn ghost">Annuler</button>
+        <button id="generateGroups" value="default" class="btn primary">Générer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="calculatorDialog" class="dialog">
+    <form method="dialog" class="dialog-card calculator">
+      <h3>Calculette EPS</h3>
+      <input id="calcDisplay" readonly value="0" />
+      <div class="calc-grid">
+        <button type="button">7</button><button type="button">8</button><button type="button">9</button><button type="button">/</button>
+        <button type="button">4</button><button type="button">5</button><button type="button">6</button><button type="button">*</button>
+        <button type="button">1</button><button type="button">2</button><button type="button">3</button><button type="button">-</button>
+        <button type="button">0</button><button type="button">.</button><button type="button">=</button><button type="button">+</button>
+        <button type="button" class="wide">C</button>
+      </div>
+      <button value="close" class="btn primary">Fermer</button>
+    </form>
+  </dialog>
+
+
+
+  <dialog id="helpDialog" class="dialog">
+    <form method="dialog" class="dialog-card help-card">
+      <div class="help-head">
+        <div>
+          <p class="eyebrow">Mode d’emploi</p>
+          <h3>Comment utiliser CréaGroupe ?</h3>
+        </div>
+        <button value="close" class="btn ghost" aria-label="Fermer">×</button>
+      </div>
+      <div class="help-grid">
+        <article class="help-block b1"><strong>1. Créer une classe</strong><span>Collez une liste simple : un élève par ligne. Exemple : “Alice Martin”. Pas besoin d’ajouter sexe ou niveau au départ.</span></article>
+        <article class="help-block b2"><strong>2. Vérifier les élèves</strong><span>L’application propose automatiquement G/F selon le prénom. Vous pouvez corriger le sexe et le classement en deux secondes.</span></article>
+        <article class="help-block b3"><strong>3. Générer les groupes</strong><span>Choisissez aléatoire, mixte, homogène, hétérogène ou manuel. Le classement 1 à 5 sert aux groupes homogènes/hétérogènes.</span></article>
+        <article class="help-block b4"><strong>4. Ajuster sur le terrain</strong><span>Déplacez les élèves par glisser-déposer entre les groupes. En manuel, la liste “élèves disponibles” sert de réserve.</span></article>
+        <article class="help-block b5"><strong>5. Mémos EPS</strong><span>Chaque groupe possède une zone libre pour noter score, observations, rôles, points ou remarques de fin de match.</span></article>
+        <article class="help-block b6"><strong>6. Stockage local</strong><span>Les classes restent dans le navigateur de l’appareil. Pour repartir à zéro, supprimez la classe concernée.</span></article>
+      </div>
+      <button value="close" class="btn primary">J’ai compris</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="app.js"></script>
+</body>
+</html>
