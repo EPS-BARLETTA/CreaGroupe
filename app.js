@@ -2,6 +2,7 @@ const $ = s => document.querySelector(s);
 const storeKey = 'creagroupe-v1';
 let state = JSON.parse(localStorage.getItem(storeKey) || '{"classes":[],"currentClassId":null,"groups":[],"available":[]}');
 let dragged = null;
+let touchDrag = null;
 const palette = ['#2563eb','#7c3aed','#059669','#ea580c','#dc2626','#0891b2','#db2777','#65a30d','#9333ea','#0f766e'];
 const firstNameSex = {
   // Filles
@@ -141,9 +142,11 @@ function renderGroups(){
   state.groups.forEach((g,gi)=>{
     if(!g.color) g.color=colorFor(gi);
     const card=document.createElement('article'); card.className='group-card'; card.dataset.gi=gi; card.style.setProperty('--groupColor', g.color);
-    card.innerHTML=`<h3>${g.name}<span>${g.students.length}</span></h3><div class="dropzone"></div><textarea class="memo" placeholder="Mémo : observations, score, rôle, points...">${escapeHtml(g.memo||'')}</textarea>`;
+    card.innerHTML=`<h3>${g.name}<span>${g.students.length}</span></h3>${groupStatsHtml(g)}<div class="dropzone"></div><textarea class="memo" placeholder="Mémo : observations, score, rôle, points...">${escapeHtml(g.memo||'')}</textarea>`;
     const zone=card.querySelector('.dropzone');
     g.students.forEach((s,si)=>zone.appendChild(studentPill(s,{type:'group',gi,si})));
+    card.dataset.dropType='group';
+    card.dataset.dropGi=gi;
     card.addEventListener('dragover',e=>e.preventDefault());
     card.addEventListener('drop',()=>moveDragged({type:'group',gi}));
     card.querySelector('.memo').oninput=e=>{state.groups[gi].memo=e.target.value;save();};
@@ -156,15 +159,91 @@ function renderAvailable(active){
   if(!state.available) state.available=[];
   if(!state.available.length) bench.innerHTML='<p class="empty-bench">Tous les élèves sont placés. Glissez un élève ici pour le rendre disponible.</p>';
   state.available.forEach((s,si)=>bench.appendChild(studentPill(s,{type:'available',si})));
+  bench.dataset.dropType='available';
   bench.addEventListener('dragover',e=>e.preventDefault());
   bench.ondrop=()=>moveDragged({type:'available'});
 }
 function studentPill(s,origin){
   const p=document.createElement('div'); p.className='student-pill'; p.draggable=true;
+  p.dataset.originType=origin.type;
+  if(origin.type==='group'){ p.dataset.originGi=origin.gi; p.dataset.originSi=origin.si; }
+  if(origin.type==='available'){ p.dataset.originSi=origin.si; }
   p.innerHTML=`<strong>${escapeHtml(s.name)}</strong><span>${s.sex} · ${s.level}</span>`;
   p.addEventListener('dragstart',()=>{dragged=origin; p.classList.add('dragging')});
   p.addEventListener('dragend',()=>p.classList.remove('dragging'));
+  p.addEventListener('pointerdown', e=>startTouchDrag(e,p,origin));
   return p;
+}
+function groupStatsHtml(g){
+  const total=g.students.length;
+  const boys=g.students.filter(s=>s.sex==='G').length;
+  const girls=g.students.filter(s=>s.sex==='F').length;
+  const other=total-boys-girls;
+  const avg=total ? (g.students.reduce((sum,s)=>sum+(+s.level||3),0)/total).toFixed(1).replace('.',',') : '—';
+  return `<div class="group-stats"><span>👦 ${boys}</span><span>👧 ${girls}</span>${other?`<span>?</span>`:''}<span>Ø ${avg}</span></div>`;
+}
+function startTouchDrag(e, pill, origin){
+  if(e.pointerType === 'mouse') return;
+  if(touchDrag) return;
+  const startX=e.clientX, startY=e.clientY;
+  let ghost=null, active=false;
+  const timer=setTimeout(()=>{
+    active=true; dragged=origin;
+    pill.classList.add('dragging','touch-source');
+    ghost=pill.cloneNode(true);
+    ghost.classList.add('drag-ghost');
+    ghost.style.width=pill.getBoundingClientRect().width+'px';
+    document.body.appendChild(ghost);
+    moveGhost(e.clientX,e.clientY);
+    if(navigator.vibrate) navigator.vibrate(20);
+  },220);
+  function cleanup(){
+    clearTimeout(timer);
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', cleanup);
+    pill.classList.remove('dragging','touch-source');
+    document.querySelectorAll('.drop-target').forEach(x=>x.classList.remove('drop-target'));
+    if(ghost) ghost.remove();
+    touchDrag=null;
+  }
+  function onMove(ev){
+    if(!active && Math.hypot(ev.clientX-startX, ev.clientY-startY)>12){ cleanup(); return; }
+    if(!active) return;
+    ev.preventDefault();
+    moveGhost(ev.clientX,ev.clientY);
+    highlightDropTarget(ev.clientX,ev.clientY);
+  }
+  function onUp(ev){
+    if(active){
+      ev.preventDefault();
+      const target=getDropTarget(ev.clientX,ev.clientY);
+      cleanup();
+      if(target) moveDragged(target); else { dragged=null; renderGroups(); }
+    } else cleanup();
+  }
+  function moveGhost(x,y){ if(ghost){ ghost.style.left=x+'px'; ghost.style.top=y+'px'; } }
+  touchDrag={origin};
+  document.addEventListener('pointermove', onMove, {passive:false});
+  document.addEventListener('pointerup', onUp, {passive:false});
+  document.addEventListener('pointercancel', cleanup);
+}
+function getDropTarget(x,y){
+  const ghost=document.querySelector('.drag-ghost'); if(ghost) ghost.style.pointerEvents='none';
+  const el=document.elementFromPoint(x,y);
+  if(ghost) ghost.style.pointerEvents='none';
+  const bench=el?.closest('#availableStudents');
+  if(bench && !$('#manualBench').classList.contains('hidden')) return {type:'available'};
+  const card=el?.closest('.group-card');
+  if(card) return {type:'group', gi:+card.dataset.gi};
+  return null;
+}
+function highlightDropTarget(x,y){
+  document.querySelectorAll('.drop-target').forEach(x=>x.classList.remove('drop-target'));
+  const t=getDropTarget(x,y);
+  if(!t) return;
+  if(t.type==='available') $('#availableStudents')?.classList.add('drop-target');
+  if(t.type==='group') document.querySelector(`.group-card[data-gi="${t.gi}"]`)?.classList.add('drop-target');
 }
 function moveDragged(target){
   if(!dragged) return;
