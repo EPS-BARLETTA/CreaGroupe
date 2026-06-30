@@ -21,3 +21,23 @@
 .group-stats span{border:1px solid var(--line);border-radius:14px;background:#f8fbff;padding:8px 10px;text-align:center;font-weight:900;color:#344054;white-space:nowrap}
 .available-list.drop-target{outline-offset:2px}
 @media(max-width:760px){.group-stats{grid-template-columns:repeat(2,1fr)}.student-pill{padding:14px 12px}.drop-target{outline-width:3px}}
+
+/* Correctif tactile iPad / Android : appui long fluide */
+.student-pill,
+.drag-ghost,
+.dropzone,
+.available-list {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  transform: translate(-50%, -50%) scale(1.04);
+  pointer-events: none;
+  box-shadow: 0 22px 50px rgba(19,32,51,.24);
+  opacity: .96;
+}
+.touch-source { opacity: .35; }
+.drop-target { outline: 4px solid rgba(35,87,255,.28); outline-offset: 4px; }
